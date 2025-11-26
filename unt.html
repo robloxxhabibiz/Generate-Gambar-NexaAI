@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Generator Pro</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            top: -100px;
+            right: -100px;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            bottom: -150px;
+            left: -150px;
+            animation: float 10s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(20px, 20px) rotate(180deg); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .input-box {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 20px;
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            resize: vertical;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .char-counter {
+            text-align: right;
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 8px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            padding: 18px 30px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-generate:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-generate:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-clear {
+            background: white;
+            color: #666;
+            border: 3px solid #e0e0e0;
+        }
+
+        .btn-clear:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+
+        .result-area {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 20px;
+            padding: 40px;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-area::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(255,255,255,0.1) 10px,
+                    rgba(255,255,255,0.1) 20px
+                );
+            animation: slide 20s linear infinite;
+        }
+
+        @keyframes slide {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(40px, 40px); }
+        }
+
+        .result-area img {
+            max-width: 100%;
+            max-height: 600px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+            animation: zoomIn 0.5s ease-out;
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .placeholder {
+            text-align: center;
+            color: #999;
+            position: relative;
+            z-index: 1;
+        }
+
+        .placeholder-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .placeholder svg {
+            width: 50px;
+            height: 50px;
+            color: #666;
+        }
+
+        .loading {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .loader {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 20px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: rotate 1s linear infinite;
+        }
+
+        @keyframes rotate {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            font-size: 1.1em;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .status-bar {
+            margin-top: 20px;
+            padding: 15px 25px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status-bar.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status-bar.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .status-bar.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .status-bar.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        .examples {
+            margin-top: 40px;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 30px;
+            border-radius: 20px;
+        }
+
+        .examples h3 {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .tag {
+            background: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .tag:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 25px;
+            }
+        }
+
+        .settings {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .setting-item {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .setting-item label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .setting-item select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .setting-item select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .download-btn {
+            background: #28a745;
+            color: white;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>✨ AI Image Generator Pro</h1>
+                <p>Ubah Imajinasimu Jadi Gambar Nyata dengan AI</p>
+            </div>
+
+            <div class="input-box">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="prompt" 
+                        placeholder="Deskripsikan gambar yang ingin kamu buat...&#10;&#10;Contoh: robot futuristik duduk santai di pinggir lapangan sepak bola saat sunset, detailed, 4K, cinematic lighting"
+                        maxlength="1000"
+                    ></textarea>
+                    <div class="char-counter">
+                        <span id="charCount">0</span>/1000 karakter
+                    </div>
+                </div>
+
+                <div class="settings">
+                    <div class="setting-item">
+                        <label>📐 Ukuran</label>
+                        <select id="size">
+                            <option value="1024x768">Landscape (1024x768)</option>
+                            <option value="768x1024">Portrait (768x1024)</option>
+                            <option value="1024x1024">Square (1024x1024)</option>
+                            <option value="1920x1080">HD (1920x1080)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>🎨 Style</label>
+                        <select id="style">
+                            <option value="">Auto</option>
+                            <option value="photorealistic">Realistic</option>
+                            <option value="anime">Anime</option>
+                            <option value="digital-art">Digital Art</option>
+                            <option value="oil-painting">Oil Painting</option>
+                            <option value="3d-render">3D Render</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn-generate" id="generateBtn">
+                        <span>⚡</span> Generate Gambar
+                    </button>
+                    <button class="btn-clear" id="clearBtn">
+                        <span>🗑️</span> Clear
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-area" id="resultArea">
+                <div class="placeholder">
+                    <div class="placeholder-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                    </div>
+                    <h3>Hasil gambar akan muncul di sini</h3>
+                    <p>Ketik prompt dan klik Generate untuk memulai</p>
+                </div>
+            </div>
+
+            <button class="download-btn" id="downloadBtn" style="display:none;">
+                <span>⬇️</span> Download Gambar
+            </button>
+
+            <div class="status-bar" id="statusBar"></div>
+
+            <div class="examples">
+                <h3>💡 Contoh Prompt Keren:</h3>
+                <div class="tags">
+                    <span class="tag">robot futuristik duduk di pinggir lapangan</span>
+                    <span class="tag">astronaut riding a horse on mars, cinematic</span>
+                    <span class="tag">cyberpunk city at night, neon lights, rain</span>
+                    <span class="tag">cute cat wearing samurai armor, anime style</span>
+                    <span class="tag">dragon flying over fantasy castle, sunset</span>
+                    <span class="tag">underwater city with glowing jellyfish</span>
+                    <span class="tag">steampunk airship in the clouds</span>
+                    <span class="tag">magical forest with fairy lights</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const prompt = document.getElementById('prompt');
+        const charCount = document.getElementById('charCount');
+        const generateBtn = document.getElementById('generateBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resultArea = document.getElementById('resultArea');
+        const statusBar = document.getElementById('statusBar');
+        const sizeSelect = document.getElementById('size');
+        const styleSelect = document.getElementById('style');
+
+        let currentImageUrl = '';
+        let isGenerating = false;
+
+        // Character counter
+        prompt.addEventListener('input', () => {
+            charCount.textContent = prompt.value.length;
+        });
+
+        // Generate image
+        generateBtn.addEventListener('click', async () => {
+            const text = prompt.value.trim();
+            
+            if (!text) {
+                showStatus('Tolong masukkan prompt dulu!', 'error');
+                return;
+            }
+
+            if (text.length < 5) {
+                showStatus('Prompt terlalu pendek! Minimal 5 karakter.', 'error');
+                return;
+            }
+
+            await generateImage(text);
+        });
+
+        async function generateImage(text) {
+            if (isGenerating) return;
+            
+            isGenerating = true;
+            generateBtn.disabled = true;
+            downloadBtn.style.display = 'none';
+            
+            showStatus('🚀 Sedang membuat gambar dengan AI...', 'info');
+            
+            resultArea.innerHTML = `
+                <div class="loading">
+                    <div class="loader"></div>
+                    <p>Tunggu sebentar, AI sedang bekerja...</p>
+                </div>
+            `;
+
+            try {
+                const size = sizeSelect.value.split('x');
+                const width = size[0];
+                const height = size[1];
+                const style = styleSelect.value;
+                
+                let finalPrompt = text;
+                if (style) {
+                    finalPrompt = `${text}, ${style} style`;
+                }
+
+                const encodedPrompt = encodeURIComponent(finalPrompt);
+                const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&nologo=true&enhance=true&seed=${Date.now()}`;
+
+                const img = new Image();
+                
+                img.onload = () => {
+                    resultArea.innerHTML = '';
+                    resultArea.appendChild(img);
+                    currentImageUrl = imageUrl;
+                    showStatus('✅ Gambar berhasil dibuat! Keren kan hasilnya?', 'success');
+                    downloadBtn.style.display = 'block';
+                    isGenerating = false;
+                    generateBtn.disabled = false;
+                };
+
+                img.onerror = () => {
+                    resultArea.innerHTML = `
+                        <div class="placeholder">
+                            <div class="placeholder-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="15" y1="9" x2="9" y2="15"/>
+                                    <line x1="9" y1="9" x2="15" y2="15"/>
+                                </svg>
+                            </div>
+                            <h3>Gagal membuat gambar</h3>
+                            <p>Coba lagi dengan prompt yang berbeda</p>
+                        </div>
+                    `;
+                    showStatus('❌ Gagal membuat gambar. Silakan coba lagi!', 'error');
+                    isGenerating = false;
+                    generateBtn.disabled = false;
+                };
+
+                img.src = imageUrl;
+
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('❌ Terjadi kesalahan sistem. Coba lagi!', 'error');
+                isGenerating = false;
+                generateBtn.disabled = false;
+            }
+        }
+
+        // Clear
+        clearBtn.addEventListener('click', () => {
+            prompt.value = '';
+            charCount.textContent = '0';
+            resultArea.innerHTML = `
+                <div class="placeholder">
+                    <div class="placeholder-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                    </div>
+                    <h3>Hasil gambar akan muncul di sini</h3>
+                    <p>Ketik prompt dan klik Generate untuk memulai</p>
+                </div>
+            `;
+            statusBar.className = 'status-bar';
+            downloadBtn.style.display = 'none';
+        });
+
+        // Download
+        downloadBtn.addEventListener('click', () => {
+            if (currentImageUrl) {
+                const link = document.createElement('a');
+                link.href = currentImageUrl;
+                link.download = `ai-generated-${Date.now()}.png`;
+                link.click();
+                showStatus('⬇️ Gambar sedang didownload...', 'success');
+            }
+        });
+
+        // Example tags
+        document.querySelectorAll('.tag').forEach(tag => {
+            tag.addEventListener('click', () => {
+                prompt.value = tag.textContent;
+                charCount.textContent = tag.textContent.length;
+                generateImage(tag.textContent);
+            });
+        });
+
+        // Status helper
+        function showStatus(message, type) {
+            statusBar.textContent = message;
+            statusBar.className = `status-bar ${type} show`;
+            
+            setTimeout(() => {
+                statusBar.classList.remove('show');
+            }, 5000);
+        }
+
+        // Enter to generate
+        prompt.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                generateBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
